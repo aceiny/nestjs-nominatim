@@ -24,3 +24,7 @@ jest.config.js
 
 # Node modules
 node_modules/
+
+# Source maps
+dist/**/*.map
+
