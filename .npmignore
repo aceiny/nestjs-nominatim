@@ -1,10 +1,11 @@
-# Source code
+# Source code 
 src/
 *.ts
 
 # Tests
 test/
 src/**/*.test.ts
+dist/test.js
 dist/**/*.test.js
 
 # Configs
@@ -16,10 +17,10 @@ jest.config.js
 *.prettierrc
 *.prettierignore
 
-# Logs and local environment
+# Logs and environment
 *.log
 .env
-.env.* 
+.env.*
 
-# Node 
+# Node modules
 node_modules/
