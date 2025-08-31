@@ -120,7 +120,7 @@ Check the health status of the Nominatim API.
 
 ```typescript
 const health = await nominatimService.healthCheck();
-console.log(health.status); // 'healthy' | 'unhealthy'
+console.log(health.message); // 'OK' 
 ```
 
 #### `getFormattedAddress(place: NominatimPlace): FormattedAddress`
