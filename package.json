@@ -1,8 +1,8 @@
 {
   "name": "nestjs-nominatim",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A powerful NestJS library for OpenStreetMap Nominatim API integration with TypeScript support, providing geocoding, reverse geocoding, and place lookup functionality",
-    "main": "dist/index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rimraf dist && tsc",
