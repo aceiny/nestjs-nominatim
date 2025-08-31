@@ -35,15 +35,15 @@ npm install @nestjs/common @nestjs/core @nestjs/axios rxjs axios
 ### 1. Import the Module
 
 ```typescript
-import { Module } from '@nestjs/common';
-import { NominatimModule } from 'nestjs-nominatim';
+import { Module } from "@nestjs/common";
+import { NominatimModule } from "nestjs-nominatim";
 
 @Module({
   imports: [
     NominatimModule.forRoot({
-      baseUrl: 'https://nominatim.openstreetmap.org',
-      language: 'en',
-      userAgent: 'YourApp/1.0',
+      baseUrl: "https://nominatim.openstreetmap.org",
+      language: "en",
+      userAgent: "YourApp/1.0",
       timeout: 5000,
     }),
   ],
@@ -54,8 +54,8 @@ export class AppModule {}
 ### 2. Use the Service
 
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { NominatimService } from 'nestjs-nominatim';
+import { Injectable } from "@nestjs/common";
+import { NominatimService } from "nestjs-nominatim";
 
 @Injectable()
 export class LocationService {
@@ -75,15 +75,15 @@ export class LocationService {
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `baseUrl` | `string` | `https://nominatim.openstreetmap.org` | Nominatim API base URL |
-| `language` | `string` | `en` | Preferred language for results |
-| `addressdetails` | `boolean` | `false` | Include detailed address breakdown |
-| `timeout` | `number` | `5000` | Request timeout in milliseconds |
-| `userAgent` | `string` | `nestjs-nominatim` | User agent string |
-| `extratags` | `boolean` | `false` | Include extra OSM tags |
-| `namedetails` | `boolean` | `false` | Include name details |
+| Option           | Type      | Default                               | Description                        |
+| ---------------- | --------- | ------------------------------------- | ---------------------------------- |
+| `baseUrl`        | `string`  | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
+| `language`       | `string`  | `en`                                  | Preferred language for results     |
+| `addressdetails` | `boolean` | `false`                               | Include detailed address breakdown |
+| `timeout`        | `number`  | `5000`                                | Request timeout in milliseconds    |
+| `userAgent`      | `string`  | `nestjs-nominatim`                    | User agent string                  |
+| `extratags`      | `boolean` | `false`                               | Include extra OSM tags             |
+| `namedetails`    | `boolean` | `false`                               | Include name details               |
 
 ### Service Methods
 
@@ -92,7 +92,7 @@ export class LocationService {
 Search for places by name or address.
 
 ```typescript
-const results = await nominatimService.search('Paris, France');
+const results = await nominatimService.search("Paris, France");
 console.log(results[0].display_name); // "Paris, Île-de-France, France"
 ```
 
@@ -110,7 +110,7 @@ console.log(place.display_name); // Address at the coordinates
 Look up places by OpenStreetMap IDs.
 
 ```typescript
-const places = await nominatimService.lookup(['R146656', 'W104393803']);
+const places = await nominatimService.lookup(["R146656", "W104393803"]);
 console.log(places[0].display_name);
 ```
 
@@ -141,12 +141,12 @@ console.log(formatted.city); // "Paris"
 @Module({
   imports: [
     NominatimModule.forRoot({
-      baseUrl: 'https://your-nominatim-instance.com',
-      language: 'fr',
+      baseUrl: "https://your-nominatim-instance.com",
+      language: "fr",
       addressdetails: true,
       extratags: true,
       namedetails: true,
-      userAgent: 'MyGeocodingApp/2.0 (contact@example.com)',
+      userAgent: "MyGeocodingApp/2.0 (contact@example.com)",
       timeout: 10000,
     }),
   ],
@@ -166,7 +166,7 @@ export class LocationService {
       const results = await this.nominatimService.search(query);
       return { success: true, data: results };
     } catch (error) {
-      console.error('Geocoding failed:', error.message);
+      console.error("Geocoding failed:", error.message);
       return { success: false, error: error.message };
     }
   }
@@ -180,11 +180,11 @@ export class LocationService {
 export class HealthService {
   constructor(private readonly nominatimService: NominatimService) {}
 
-  @Get('/health/nominatim')
+  @Get("/health/nominatim")
   async checkNominatimHealth() {
     const health = await this.nominatimService.healthCheck();
-    if (health.status === 'unhealthy') {
-      throw new ServiceUnavailableException('Nominatim API is unavailable');
+    if (health.status === "unhealthy") {
+      throw new ServiceUnavailableException("Nominatim API is unavailable");
     }
     return health;
   }
@@ -197,13 +197,13 @@ The library supports multiple languages for address formatting:
 
 ```typescript
 // French addresses
-NominatimModule.forRoot({ language: 'fr' })
+NominatimModule.forRoot({ language: "fr" });
 
-// German addresses  
-NominatimModule.forRoot({ language: 'de' })
+// German addresses
+NominatimModule.forRoot({ language: "de" });
 
 // Spanish addresses
-NominatimModule.forRoot({ language: 'es' })
+NominatimModule.forRoot({ language: "es" });
 ```
 
 ## 📝 Type Definitions
@@ -248,6 +248,7 @@ If you encounter any issues or have feature requests, please [create an issue](h
 ## 📞 Support
 
 For support and questions, please:
+
 - Check the documentation above
 - Look at the [test examples](src/test.ts)
 - Create an issue on GitHub
@@ -259,7 +260,7 @@ For support and questions, please:
 - All contributors to this project
 
 ## Author
-ahmed yassine zeraibi (aceiny.dev@gmail.com)
----
+
+## ahmed yassine zeraibi (aceiny.dev@gmail.com)
 
 **Made with ❤️ for the NestJS community**
