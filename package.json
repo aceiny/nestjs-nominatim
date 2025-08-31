@@ -1,0 +1,35 @@
+{
+  "name": "nestjs-nominatim",
+  "version": "1.0.0",
+  "description": "NestJS library to communicate with Nominatim API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "npm run build && node dist/test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aceiny/nestjs-nominatim.git"
+  },
+  "keywords": [
+    "nestjs",
+    "nominatim",
+    "typescript",
+    "library"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/axios": "^4.0.0",
+    "rxjs": "^7.0.0",
+    "axios": "^1.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^24.3.0",
+    "rimraf": "^6.0.1"
+  }
+}
