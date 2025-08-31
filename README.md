@@ -260,7 +260,8 @@ For support and questions, please:
 - All contributors to this project
 
 ## Author
-
-## ahmed yassine zeraibi (aceiny.dev@gmail.com)
+```
+ahmed yassine zeraibi (aceiny.dev@gmail.com)
+```
 
 **Made with ❤️ for the NestJS community**
