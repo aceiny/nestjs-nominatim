@@ -1,0 +1,25 @@
+# Source code
+src/
+*.ts
+
+# Tests
+test/
+src/**/*.test.ts
+dist/**/*.test.js
+
+# Configs
+tsconfig.json
+tsconfig.*.json
+jest.config.js
+*.eslintrc.js
+*.eslint.json
+*.prettierrc
+*.prettierignore
+
+# Logs and local environment
+*.log
+.env
+.env.* 
+
+# Node 
+node_modules/
