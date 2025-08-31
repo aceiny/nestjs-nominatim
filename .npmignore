@@ -6,6 +6,8 @@ src/
 test/
 src/**/*.test.ts
 dist/test.js
+dist/test.js.map
+dist/test.d.ts.map
 dist/**/*.test.js
 
 # Configs
