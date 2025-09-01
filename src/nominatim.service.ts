@@ -5,16 +5,13 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { NominatimModuleOptions } from "./types/interfaces/options.interface";
 import axios, { AxiosInstance } from "axios";
 import { NominatimConfig } from "./config/nominatim.config";
-import {
-  FormattedAddress,
-  NominatimPlace,
-  NominatimSearchResults,
-} from "./types/nominatim.types";
 import { Coordinates } from "./types/interfaces/geolocation-coordinates.interface";
 import { HealthCheck } from "./types/interfaces/health-check.interface";
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { CacheKeys } from "./helpers/cash-keys";
-
+import { FormattedAddress } from "./types/interfaces/formatted-address.interface";
+import { NominatimPlace } from "./types/interfaces/place.interface";
+import { NominatimSearchResults } from "./types/interfaces/search-result.interface";
 /**
  * Service for interacting with the Nominatim API.
  * @class NominatimService

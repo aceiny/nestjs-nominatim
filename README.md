@@ -103,16 +103,16 @@ export class LocationService {
 
 ### Configuration Options
 
-| Option           | Type                  | Default                               | Description                        |
-| ---------------- | --------------------- | ------------------------------------- | ---------------------------------- |
-| `baseUrl`        | `string`              | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
-| `language`       | `string`              | `en`                                  | Preferred language for results     |
-| `addressdetails` | `boolean`             | `false`                               | Include detailed address breakdown |
-| `timeout`        | `number`              | `5000`                                | Request timeout in milliseconds    |
-| `userAgent`      | `string`              | `nestjs-nominatim`                    | User agent string                  |
-| `extratags`      | `boolean`             | `false`                               | Include extra OSM tags             |
-| `namedetails`    | `boolean`             | `false`                               | Include name details               |
-| `cache`          | `CacheModuleOptions`  | `CashConfig`                          | Cache configuration options        |
+| Option           | Type                 | Default                               | Description                        |
+| ---------------- | -------------------- | ------------------------------------- | ---------------------------------- |
+| `baseUrl`        | `string`             | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
+| `language`       | `string`             | `en`                                  | Preferred language for results     |
+| `addressdetails` | `boolean`            | `false`                               | Include detailed address breakdown |
+| `timeout`        | `number`             | `5000`                                | Request timeout in milliseconds    |
+| `userAgent`      | `string`             | `nestjs-nominatim`                    | User agent string                  |
+| `extratags`      | `boolean`            | `false`                               | Include extra OSM tags             |
+| `namedetails`    | `boolean`            | `false`                               | Include name details               |
+| `cache`          | `CacheModuleOptions` | `CashConfig`                          | Cache configuration options        |
 
 ### Service Methods
 
@@ -130,7 +130,10 @@ console.log(results[0].display_name); // "Paris, Île-de-France, France"
 Perform reverse geocoding from coordinates.
 
 ```typescript
-const place = await nominatimService.getLocationFromCords({ lat: 48.8566, lon: 2.3522 });
+const place = await nominatimService.getLocationFromCords({
+  lat: 48.8566,
+  lon: 2.3522,
+});
 console.log(place.display_name); // Address at the coordinates
 ```
 
@@ -157,7 +160,10 @@ console.log(health.message, health.status); // 'OK' , 0
 Format a place result into a structured address with standardized components.
 
 ```typescript
-const place = await nominatimService.getLocationFromCords({ lat: 48.8566, lon: 2.3522 });
+const place = await nominatimService.getLocationFromCords({
+  lat: 48.8566,
+  lon: 2.3522,
+});
 const formatted = nominatimService.formatLocation(place);
 
 console.log(formatted.country); // "France"

@@ -4,6 +4,20 @@
   "description": "A powerful NestJS library for OpenStreetMap Nominatim API integration with TypeScript support, providing geocoding, reverse geocoding, place lookup functionality, and built-in caching support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "rimraf dist && tsc",
     "test": "npm run build && node dist/test.js",

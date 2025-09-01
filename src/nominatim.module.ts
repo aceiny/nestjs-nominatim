@@ -6,8 +6,17 @@ import { NominatimConfig } from "./config/nominatim.config";
 import { CacheModule } from "@nestjs/cache-manager";
 import { CashConfig } from "./config/cash.config";
 
+/**
+ * Dynamic module for Nominatim integration with NestJS
+ * Provides geocoding, reverse geocoding, and place lookup functionality
+ */
 @Module({})
 export class NominatimModule {
+  /**
+   * Configure the Nominatim module with custom options
+   * @param options Configuration options for the Nominatim service
+   * @returns A configured dynamic module
+   */
   static forRoot(options: NominatimModuleOptions = {}): DynamicModule {
     const baseUrl = options.baseUrl ?? NominatimConfig.baseUrl;
     const language = options.language ?? NominatimConfig.language;

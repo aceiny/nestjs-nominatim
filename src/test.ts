@@ -1,11 +1,8 @@
 import { NestFactory } from "@nestjs/core";
 import { NominatimModule } from "./nominatim.module";
 import { NominatimService } from "./nominatim.service";
-import {
-  NominatimPlace,
-  NominatimSearchResults,
-} from "./types/nominatim.types";
-
+import { NominatimPlace } from "./types/interfaces/place.interface";
+import { NominatimSearchResults } from "./types/interfaces/search-result.interface";
 async function bootstrap() {
   try {
     // Create a Nest application context
