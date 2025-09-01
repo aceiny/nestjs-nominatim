@@ -53,7 +53,7 @@ async function bootstrap() {
     console.log(
       "\n4. Reverse geocoding for coordinates of Paris (48.8566, 2.3522)...",
     );
-    const reverseResult: NominatimPlace = await nominatim.getLocationFromCords({
+    const reverseResult: NominatimPlace = await nominatim.reverse({
       lat: 48.8566,
       lon: 2.3522,
     });
