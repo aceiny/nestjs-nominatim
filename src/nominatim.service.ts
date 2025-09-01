@@ -12,6 +12,8 @@ import {
 } from "./types/nominatim.types";
 import { Coordinates } from "./types/interfaces/geolocation-coordinates.interface";
 import { HealthCheck } from "./types/interfaces/health-check.interface";
+import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
+import { CacheKeys } from "./helpers/cash-keys";
 
 /**
  * Service for interacting with the Nominatim API.
@@ -40,6 +42,7 @@ export class NominatimService {
    */
   constructor(
     @Inject("NOMINATIM_OPTIONS") private options: NominatimModuleOptions,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.logger = new Logger(NominatimService.name);
 
@@ -107,13 +110,45 @@ export class NominatimService {
   }
 
   /**
+   * Generic helper for caching API results.
+   *
+   * Checks if a value exists in the cache for the given key.
+   * If a cached value exists, it is returned immediately.
+   * Otherwise, the provided request function is called, its result
+   * is stored in the cache, and then returned.
+   *
+   * @template T - The type of the data being cached.
+   * @param {string} key - The cache key to store/retrieve the value.
+   * @param {() => Promise<T>} requestFn - A function that performs the API request and returns a promise with the result.
+   * @param {number} [ttl] - Optional. Time-to-live for the cached value in milliseconds. If not provided, the default TTL from the cache configuration is used.
+   * @returns {Promise<T>} - A promise that resolves with either the cached value or the newly fetched result.
+   *
+   * @example
+   * const result = await this.cachedRequest('search:paris', () => this.request('/search', { q: 'paris' }), 3600000);
+   */
+  private async cachedRequest<T>(
+    key: string,
+    requestFn: () => Promise<T>,
+    ttl?: number,
+  ): Promise<T> {
+    const cached = await this.cacheManager.get<T>(key);
+    if (cached) return cached;
+
+    const result = await requestFn();
+    await this.cacheManager.set(key, result, ttl);
+    return result;
+  }
+
+  /**
    * Searches for a location by a query string.
    * @public
    * @param {string} query - The search query (e.g., a place name or address).
    * @returns {Promise<NominatimSearchResults>} A promise that resolves with the search results.
    */
   public async search(query: string): Promise<NominatimSearchResults> {
-    return this.request<NominatimSearchResults>("/search", { q: query });
+    return this.cachedRequest(CacheKeys.SEARCH(query), () =>
+      this.request<NominatimSearchResults>("/search", { q: query }),
+    );
   }
 
   /**
@@ -122,13 +157,17 @@ export class NominatimService {
    * @param {Coordinates} coordinates - The latitude and longitude to reverse geocode.
    * @returns {Promise<NominatimPlace>} A promise that resolves with the location information.
    */
-  public async getLocationFromCords(
+  public async reverse(
     coordinates: Coordinates,
   ): Promise<NominatimPlace> {
-    return this.request<NominatimPlace>("/reverse", {
-      lat: coordinates.lat,
-      lon: coordinates.lon,
-    });
+    return this.cachedRequest(
+      CacheKeys.REVERSE(coordinates.lat, coordinates.lon),
+      () =>
+        this.request<NominatimPlace>("/reverse", {
+          lat: coordinates.lat,
+          lon: coordinates.lon,
+        }),
+    );
   }
 
   /**
@@ -143,9 +182,11 @@ export class NominatimService {
       throw new Error("lookup requires at least one OSM ID");
     }
 
-    return this.request<NominatimSearchResults>("/lookup", {
-      osm_ids: osmIds.join(","),
-    });
+    return this.cachedRequest(CacheKeys.LOOKUP(osmIds), () =>
+      this.request<NominatimSearchResults>("/lookup", {
+        osm_ids: osmIds.join(","),
+      }),
+    );
   }
 
   /**

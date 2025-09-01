@@ -15,6 +15,8 @@ A powerful and easy-to-use NestJS library for integrating with the Nominatim API
 - **🏥 Health Checks**: Built-in API health monitoring
 - **🌐 Language Support**: Multi-language address formatting
 - **🔧 NestJS Integration**: Native NestJS module with dependency injection
+- **📍 Address Formatting**: Convert raw place data into structured address components
+- **⚡ Caching Support**: Built-in configurable caching for improved performance
 
 ## 📦 Installation
 
@@ -27,7 +29,7 @@ npm install nestjs-nominatim
 Make sure you have the following peer dependencies installed:
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/axios rxjs axios
+npm install @nestjs/common @nestjs/core @nestjs/axios axios @nestjs/cache-manager cache-manager
 ```
 
 ## 🛠️ Quick Start
@@ -45,6 +47,34 @@ import { NominatimModule } from "nestjs-nominatim";
       language: "en",
       userAgent: "YourApp/1.0",
       timeout: 5000,
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### 1.1. With Caching (Recommended)
+
+For better performance, integrate with NestJS cache manager:
+
+```typescript
+import { Module } from "@nestjs/common";
+import { CacheModule } from "@nestjs/cache-manager";
+import { NominatimModule } from "nestjs-nominatim";
+
+@Module({
+  imports: [
+    NominatimModule.forRoot({
+      baseUrl: "https://nominatim.openstreetmap.org",
+      language: "en",
+      userAgent: "YourApp/1.0",
+      timeout: 5000,
+      addressdetails: true, 
+        // Recommended for better caching efficiency
+      cash : {
+      ttl: 3600000, // 1 hour cache
+      max: 1000, // maximum number of items in cache
+    }
     }),
   ],
 })
@@ -120,20 +150,96 @@ Check the health status of the Nominatim API.
 
 ```typescript
 const health = await nominatimService.healthCheck();
-console.log(health.message); // 'OK' 
+console.log(health.message , health.status); // 'OK' , 0
 ```
 
-#### `getFormattedAddress(place: NominatimPlace): FormattedAddress`
+#### `formatLocation(place: NominatimPlace): FormattedAddress`
 
-Format a place result into a structured address.
+Format a place result into a structured address with standardized components.
 
 ```typescript
-const formatted = nominatimService.getFormattedAddress(place);
-console.log(formatted.street); // "Rue de la Paix"
-console.log(formatted.city); // "Paris"
+const place = await nominatimService.reverse({ lat: 48.8566, lon: 2.3522 });
+const formatted = nominatimService.formatLocation(place);
+
+console.log(formatted.country); // "France"
+console.log(formatted.commune); // "Paris"
+console.log(formatted.street); // "Rue de Rivoli"
+console.log(formatted.postcode); // "75001"
+console.log(formatted.fullAddress); // Complete formatted address
 ```
 
 ## 🏗️ Advanced Usage
+
+### Caching Configuration
+
+The library includes built-in caching support to improve performance and reduce API calls. Caching is automatically applied to all search, reverse geocoding, and lookup operations.
+
+#### Basic Caching Setup
+
+```typescript
+import { CacheModule } from "@nestjs/cache-manager";
+
+@Module({
+  imports: [
+    CacheModule.register({
+      ttl: 3600000, // Cache for 1 hour
+      max: 1000, // Store up to 1000 cached responses
+    }),
+    NominatimModule.forRoot({
+      // your configuration
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+#### Redis Caching (Production Recommended)
+
+```typescript
+import { CacheModule } from "@nestjs/cache-manager";
+import { redisStore } from "cache-manager-redis-store";
+
+@Module({
+  imports: [
+    CacheModule.registerAsync({
+      useFactory: () => ({
+        store: redisStore,
+        host: "localhost",
+        port: 6379,
+        ttl: 3600, // 1 hour
+      }),
+    }),
+    NominatimModule.forRoot({
+      // your configuration
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+#### Cache Keys
+
+The library uses structured cache keys for different operations:
+- Search: `search:{query}`
+- Reverse: `reverse:{lat}:{lon}`
+- Lookup: `lookup:{osmId1},{osmId2},...`
+
+#### Performance Benefits
+
+With caching enabled, you can expect:
+- **Faster Response Times**: Subsequent identical requests return instantly from cache
+- **Reduced API Load**: Fewer requests to the Nominatim API
+- **Cost Savings**: Lower bandwidth usage and API rate limit consumption
+- **Better User Experience**: Instant results for repeated searches
+
+Example performance improvement:
+```typescript
+// First call - hits the API (slower)
+const result1 = await nominatimService.search("Paris, France"); // ~200-500ms
+
+// Second call - served from cache (faster)
+const result2 = await nominatimService.search("Paris, France"); // ~1-5ms
+```
 
 ### Custom Configuration
 
@@ -183,7 +289,7 @@ export class HealthService {
   @Get("/health/nominatim")
   async checkNominatimHealth() {
     const health = await this.nominatimService.healthCheck();
-    if (health.status === "unhealthy") {
+    if (health.messasge === "OK" || health.status = 0) {
       throw new ServiceUnavailableException("Nominatim API is unavailable");
     }
     return health;
@@ -260,6 +366,7 @@ For support and questions, please:
 - All contributors to this project
 
 ## Author
+
 ```
 ahmed yassine zeraibi (aceiny.dev@gmail.com)
 ```
