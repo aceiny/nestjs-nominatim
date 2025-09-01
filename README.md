@@ -59,7 +59,6 @@ For better performance, integrate with NestJS cache manager:
 
 ```typescript
 import { Module } from "@nestjs/common";
-import { CacheModule } from "@nestjs/cache-manager";
 import { NominatimModule } from "nestjs-nominatim";
 
 @Module({
@@ -69,12 +68,11 @@ import { NominatimModule } from "nestjs-nominatim";
       language: "en",
       userAgent: "YourApp/1.0",
       timeout: 5000,
-      addressdetails: true, 
-        // Recommended for better caching efficiency
-      cash : {
-      ttl: 3600000, // 1 hour cache
-      max: 1000, // maximum number of items in cache
-    }
+      addressdetails: true, // Recommended for better caching efficiency
+      cache: {
+        ttl: 3600000, // 1 hour cache (in milliseconds)
+        max: 1000, // maximum number of items in cache
+      },
     }),
   ],
 })
@@ -96,7 +94,7 @@ export class LocationService {
   }
 
   async reverseGeocode(lat: number, lon: number) {
-    return await this.nominatimService.reverse({ lat, lon });
+    return await this.nominatimService.getLocationFromCords({ lat, lon });
   }
 }
 ```
@@ -105,15 +103,16 @@ export class LocationService {
 
 ### Configuration Options
 
-| Option           | Type      | Default                               | Description                        |
-| ---------------- | --------- | ------------------------------------- | ---------------------------------- |
-| `baseUrl`        | `string`  | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
-| `language`       | `string`  | `en`                                  | Preferred language for results     |
-| `addressdetails` | `boolean` | `false`                               | Include detailed address breakdown |
-| `timeout`        | `number`  | `5000`                                | Request timeout in milliseconds    |
-| `userAgent`      | `string`  | `nestjs-nominatim`                    | User agent string                  |
-| `extratags`      | `boolean` | `false`                               | Include extra OSM tags             |
-| `namedetails`    | `boolean` | `false`                               | Include name details               |
+| Option           | Type                  | Default                               | Description                        |
+| ---------------- | --------------------- | ------------------------------------- | ---------------------------------- |
+| `baseUrl`        | `string`              | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
+| `language`       | `string`              | `en`                                  | Preferred language for results     |
+| `addressdetails` | `boolean`             | `false`                               | Include detailed address breakdown |
+| `timeout`        | `number`              | `5000`                                | Request timeout in milliseconds    |
+| `userAgent`      | `string`              | `nestjs-nominatim`                    | User agent string                  |
+| `extratags`      | `boolean`             | `false`                               | Include extra OSM tags             |
+| `namedetails`    | `boolean`             | `false`                               | Include name details               |
+| `cache`          | `CacheModuleOptions`  | `CashConfig`                          | Cache configuration options        |
 
 ### Service Methods
 
@@ -126,12 +125,12 @@ const results = await nominatimService.search("Paris, France");
 console.log(results[0].display_name); // "Paris, Île-de-France, France"
 ```
 
-#### `reverse(coordinates: Coordinates): Promise<NominatimPlace>`
+#### `getLocationFromCords(coordinates: Coordinates): Promise<NominatimPlace>`
 
 Perform reverse geocoding from coordinates.
 
 ```typescript
-const place = await nominatimService.reverse({ lat: 48.8566, lon: 2.3522 });
+const place = await nominatimService.getLocationFromCords({ lat: 48.8566, lon: 2.3522 });
 console.log(place.display_name); // Address at the coordinates
 ```
 
@@ -150,7 +149,7 @@ Check the health status of the Nominatim API.
 
 ```typescript
 const health = await nominatimService.healthCheck();
-console.log(health.message , health.status); // 'OK' , 0
+console.log(health.message, health.status); // 'OK' , 0
 ```
 
 #### `formatLocation(place: NominatimPlace): FormattedAddress`
@@ -158,7 +157,7 @@ console.log(health.message , health.status); // 'OK' , 0
 Format a place result into a structured address with standardized components.
 
 ```typescript
-const place = await nominatimService.reverse({ lat: 48.8566, lon: 2.3522 });
+const place = await nominatimService.getLocationFromCords({ lat: 48.8566, lon: 2.3522 });
 const formatted = nominatimService.formatLocation(place);
 
 console.log(formatted.country); // "France"
@@ -172,54 +171,73 @@ console.log(formatted.fullAddress); // Complete formatted address
 
 ### Caching Configuration
 
-The library includes built-in caching support to improve performance and reduce API calls. Caching is automatically applied to all search, reverse geocoding, and lookup operations.
+The library includes built-in caching support to improve performance and reduce API calls. Caching is automatically applied to all search, reverse geocoding, and lookup operations when configured.
 
 #### Basic Caching Setup
 
 ```typescript
-import { CacheModule } from "@nestjs/cache-manager";
+import { Module } from "@nestjs/common";
+import { NominatimModule } from "nestjs-nominatim";
 
 @Module({
   imports: [
-    CacheModule.register({
-      ttl: 3600000, // Cache for 1 hour
-      max: 1000, // Store up to 1000 cached responses
-    }),
     NominatimModule.forRoot({
-      // your configuration
+      baseUrl: "https://nominatim.openstreetmap.org",
+      language: "en",
+      userAgent: "YourApp/1.0",
+      cache: {
+        ttl: 3600000, // Cache for 1 hour (in milliseconds)
+        max: 1000, // Store up to 1000 cached responses
+      },
     }),
   ],
 })
 export class AppModule {}
 ```
 
-#### Redis Caching (Production Recommended)
+#### Advanced Caching with Redis
 
 ```typescript
-import { CacheModule } from "@nestjs/cache-manager";
+import { Module } from "@nestjs/common";
+import { NominatimModule } from "nestjs-nominatim";
 import { redisStore } from "cache-manager-redis-store";
 
 @Module({
   imports: [
-    CacheModule.registerAsync({
-      useFactory: () => ({
+    NominatimModule.forRoot({
+      baseUrl: "https://nominatim.openstreetmap.org",
+      language: "en",
+      userAgent: "YourApp/1.0",
+      cache: {
         store: redisStore,
         host: "localhost",
         port: 6379,
-        ttl: 3600, // 1 hour
-      }),
-    }),
-    NominatimModule.forRoot({
-      // your configuration
+        ttl: 3600000, // 1 hour in milliseconds
+        max: 10000,
+      },
     }),
   ],
 })
 export class AppModule {}
+```
+
+#### Default Cache Configuration
+
+If no cache configuration is provided, the library uses these defaults:
+
+```typescript
+{
+  ttl: 86400000,        // 1 day (in milliseconds)
+  namespace: "nominatim", // Cache key prefix
+  refreshThreshold: 60000, // Refresh if < 1 min left
+  nonBlocking: false,    // Block until store writes are done
+}
 ```
 
 #### Cache Keys
 
 The library uses structured cache keys for different operations:
+
 - Search: `search:{query}`
 - Reverse: `reverse:{lat}:{lon}`
 - Lookup: `lookup:{osmId1},{osmId2},...`
@@ -227,12 +245,14 @@ The library uses structured cache keys for different operations:
 #### Performance Benefits
 
 With caching enabled, you can expect:
+
 - **Faster Response Times**: Subsequent identical requests return instantly from cache
 - **Reduced API Load**: Fewer requests to the Nominatim API
 - **Cost Savings**: Lower bandwidth usage and API rate limit consumption
 - **Better User Experience**: Instant results for repeated searches
 
 Example performance improvement:
+
 ```typescript
 // First call - hits the API (slower)
 const result1 = await nominatimService.search("Paris, France"); // ~200-500ms

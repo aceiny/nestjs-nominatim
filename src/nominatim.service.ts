@@ -157,9 +157,7 @@ export class NominatimService {
    * @param {Coordinates} coordinates - The latitude and longitude to reverse geocode.
    * @returns {Promise<NominatimPlace>} A promise that resolves with the location information.
    */
-  public async reverse(
-    coordinates: Coordinates,
-  ): Promise<NominatimPlace> {
+  public async reverse(coordinates: Coordinates): Promise<NominatimPlace> {
     return this.cachedRequest(
       CacheKeys.REVERSE(coordinates.lat, coordinates.lon),
       () =>
