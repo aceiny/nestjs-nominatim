@@ -46,7 +46,7 @@ export class NominatimService {
     // Build params object conditionally
     const params: Record<string, any> = {
       format: NominatimConfig.format,
-      'accept-language': this.options.language,
+      "accept-language": this.options.language,
     };
 
     // include these parameters if they are explicitly true

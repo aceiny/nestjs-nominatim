@@ -94,7 +94,7 @@ export class LocationService {
   }
 
   async reverseGeocode(lat: number, lon: number) {
-    return await this.nominatimService.getLocationFromCords({ lat, lon });
+    return await this.nominatimService.reverse({ lat, lon });
   }
 }
 ```
@@ -125,12 +125,12 @@ const results = await nominatimService.search("Paris, France");
 console.log(results[0].display_name); // "Paris, Île-de-France, France"
 ```
 
-#### `getLocationFromCords(coordinates: Coordinates): Promise<NominatimPlace>`
+#### `reverse(coordinates: Coordinates): Promise<NominatimPlace>`
 
 Perform reverse geocoding from coordinates.
 
 ```typescript
-const place = await nominatimService.getLocationFromCords({
+const place = await nominatimService.reverse({
   lat: 48.8566,
   lon: 2.3522,
 });
@@ -160,7 +160,7 @@ console.log(health.message, health.status); // 'OK' , 0
 Format a place result into a structured address with standardized components.
 
 ```typescript
-const place = await nominatimService.getLocationFromCords({
+const place = await nominatimService.reverse({
   lat: 48.8566,
   lon: 2.3522,
 });
