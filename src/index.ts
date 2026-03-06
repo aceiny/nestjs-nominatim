@@ -1,6 +1,8 @@
 // Core module and service exports
 export * from "./nominatim.module";
 export * from "./nominatim.service";
+export * from "./nominatim.constants";
+export * from "./nominatim.interfaces";
 
 // Type definitions exports
 export * from "./types/interfaces/options.interface";
@@ -18,4 +20,4 @@ export * from "./types/enum/osm-type.enum";
 
 // Configuration exports (for advanced users)
 export { NominatimConfig } from "./config/nominatim.config";
-export { CashConfig } from "./config/cash.config";
+export { CacheConfig } from "./config/cache.config";

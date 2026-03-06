@@ -3,38 +3,25 @@
 [![npm version](https://badge.fury.io/js/nestjs-nominatim.svg)](https://badge.fury.io/js/nestjs-nominatim)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful and easy-to-use NestJS library for integrating with the Nominatim API (OpenStreetMap geocoding service). This library provides a clean, type-safe interface for performing geocoding, reverse geocoding, and place lookups.
+NestJS module for the [Nominatim](https://nominatim.openstreetmap.org/) geocoding API (OpenStreetMap). Forward/reverse geocoding, place lookup, address formatting, and built-in caching — fully typed.
 
-## 🚀 Features
-
-- **🔍 Forward Geocoding**: Search for places by name or address
-- **📍 Reverse Geocoding**: Get address information from coordinates
-- **🔎 Place Lookup**: Retrieve detailed information by OSM ID
-- **💪 TypeScript Support**: Fully typed with comprehensive interfaces
-- **⚙️ Configurable**: Flexible configuration options
-- **🏥 Health Checks**: Built-in API health monitoring
-- **🌐 Language Support**: Multi-language address formatting
-- **🔧 NestJS Integration**: Native NestJS module with dependency injection
-- **📍 Address Formatting**: Convert raw place data into structured address components
-- **⚡ Caching Support**: Built-in configurable caching for improved performance
-
-## 📦 Installation
+## Installation
 
 ```bash
 npm install nestjs-nominatim
 ```
 
-### Peer Dependencies
-
-Make sure you have the following peer dependencies installed:
+Peer dependencies (install the ones you don't already have):
 
 ```bash
-npm install @nestjs/common @nestjs/core @nestjs/axios axios @nestjs/cache-manager cache-manager
+npm install @nestjs/common @nestjs/core @nestjs/axios axios
+# Optional — only needed if you want caching:
+npm install @nestjs/cache-manager cache-manager
 ```
 
-## 🛠️ Quick Start
+## Quick Start
 
-### 1. Import the Module
+### Basic Setup
 
 ```typescript
 import { Module } from "@nestjs/common";
@@ -43,43 +30,56 @@ import { NominatimModule } from "nestjs-nominatim";
 @Module({
   imports: [
     NominatimModule.forRoot({
-      baseUrl: "https://nominatim.openstreetmap.org",
-      language: "en",
       userAgent: "YourApp/1.0",
-      timeout: 5000,
+      language: "en",
+      addressdetails: true,
     }),
   ],
 })
 export class AppModule {}
 ```
 
-### 1.1. With Caching (Recommended)
+### Async Configuration
 
-For better performance, integrate with NestJS cache manager:
+Use `forRootAsync()` to resolve config at runtime (e.g. from `ConfigService`):
 
 ```typescript
-import { Module } from "@nestjs/common";
-import { NominatimModule } from "nestjs-nominatim";
-
-@Module({
-  imports: [
-    NominatimModule.forRoot({
-      baseUrl: "https://nominatim.openstreetmap.org",
-      language: "en",
-      userAgent: "YourApp/1.0",
-      timeout: 5000,
-      addressdetails: true, // Recommended for better caching efficiency
-      cache: {
-        ttl: 3600000, // 1 hour cache (in milliseconds)
-        max: 1000, // maximum number of items in cache
-      },
-    }),
-  ],
-})
-export class AppModule {}
+NominatimModule.forRootAsync({
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) => ({
+    baseUrl: config.get<string>("GEOLOCATION_API"),
+    userAgent: `${config.get<string>("APP_NAME")}/${config.get<string>("API_VERSION")}`,
+    language: "en",
+    addressdetails: true,
+  }),
+});
 ```
 
-### 2. Use the Service
+Also supports `useClass` and `useExisting` — implement the `NominatimOptionsFactory` interface:
+
+```typescript
+@Injectable()
+export class NominatimConfigService implements NominatimOptionsFactory {
+  createNominatimOptions(): NominatimModuleOptions {
+    return {
+      userAgent: "MyApp/1.0",
+      language: "en",
+      addressdetails: true,
+    };
+  }
+}
+
+// useClass — module creates and manages the instance
+NominatimModule.forRootAsync({ useClass: NominatimConfigService });
+
+// useExisting — reuse a provider already registered elsewhere
+NominatimModule.forRootAsync({
+  imports: [ConfigurationModule],
+  useExisting: NominatimConfigService,
+});
+```
+
+### Using the Service
 
 ```typescript
 import { Injectable } from "@nestjs/common";
@@ -87,32 +87,36 @@ import { NominatimService } from "nestjs-nominatim";
 
 @Injectable()
 export class LocationService {
-  constructor(private readonly nominatimService: NominatimService) {}
+  constructor(private readonly nominatim: NominatimService) {}
 
   async searchPlace(query: string) {
-    return await this.nominatimService.search(query);
+    return this.nominatim.search(query);
   }
 
   async reverseGeocode(lat: number, lon: number) {
-    return await this.nominatimService.reverse({ lat, lon });
+    return this.nominatim.reverse({ lat, lon });
+  }
+
+  async lookupByOsmIds(ids: string[]) {
+    return this.nominatim.lookup(ids);
   }
 }
 ```
 
-## 📚 API Reference
+## API Reference
 
 ### Configuration Options
 
-| Option           | Type                 | Default                               | Description                        |
-| ---------------- | -------------------- | ------------------------------------- | ---------------------------------- |
-| `baseUrl`        | `string`             | `https://nominatim.openstreetmap.org` | Nominatim API base URL             |
-| `language`       | `string`             | `en`                                  | Preferred language for results     |
-| `addressdetails` | `boolean`            | `false`                               | Include detailed address breakdown |
-| `timeout`        | `number`             | `5000`                                | Request timeout in milliseconds    |
-| `userAgent`      | `string`             | `nestjs-nominatim`                    | User agent string                  |
-| `extratags`      | `boolean`            | `false`                               | Include extra OSM tags             |
-| `namedetails`    | `boolean`            | `false`                               | Include name details               |
-| `cache`          | `CacheModuleOptions` | `CashConfig`                          | Cache configuration options        |
+| Option           | Type                 | Default                               | Description                       |
+| ---------------- | -------------------- | ------------------------------------- | --------------------------------- |
+| `baseUrl`        | `string`             | `https://nominatim.openstreetmap.org` | Nominatim API base URL            |
+| `language`       | `string`             | `en`                                  | Preferred language (ISO 639-1)    |
+| `addressdetails` | `boolean`            | `true`                                | Include address breakdown         |
+| `timeout`        | `number`             | `5000`                                | Request timeout (ms)              |
+| `userAgent`      | `string`             | `nestjs-nominatim/1.0`                | User agent string                 |
+| `extratags`      | `boolean`            | `false`                               | Include extra OSM tags            |
+| `namedetails`    | `boolean`            | `false`                               | Include multilingual name details |
+| `cache`          | `CacheModuleOptions` | 1 day TTL, in-memory                  | Cache configuration               |
 
 ### Service Methods
 
@@ -121,280 +125,112 @@ export class LocationService {
 Search for places by name or address.
 
 ```typescript
-const results = await nominatimService.search("Paris, France");
-console.log(results[0].display_name); // "Paris, Île-de-France, France"
+const results = await nominatim.search("Paris, France");
 ```
 
 #### `reverse(coordinates: Coordinates): Promise<NominatimPlace>`
 
-Perform reverse geocoding from coordinates.
+Get location info from coordinates.
 
 ```typescript
-const place = await nominatimService.reverse({
-  lat: 48.8566,
-  lon: 2.3522,
-});
-console.log(place.display_name); // Address at the coordinates
+const place = await nominatim.reverse({ lat: 48.8566, lon: 2.3522 });
 ```
 
-#### `lookup(osmIds: string[]): Promise<NominatimPlace[]>`
+#### `lookup(osmIds: string[]): Promise<NominatimSearchResults>`
 
-Look up places by OpenStreetMap IDs.
+Look up places by OSM IDs.
 
 ```typescript
-const places = await nominatimService.lookup(["R146656", "W104393803"]);
-console.log(places[0].display_name);
+const places = await nominatim.lookup(["R146656", "W104393803"]);
 ```
 
 #### `healthCheck(): Promise<HealthCheck>`
 
-Check the health status of the Nominatim API.
+Check API availability.
 
 ```typescript
-const health = await nominatimService.healthCheck();
-console.log(health.message, health.status); // 'OK' , 0
+const health = await nominatim.healthCheck();
+// health.status === 0 means OK
 ```
 
 #### `formatLocation(place: NominatimPlace): FormattedAddress`
 
-Format a place result into a structured address with standardized components.
+Extract structured address components from a place result.
 
 ```typescript
-const place = await nominatimService.reverse({
-  lat: 48.8566,
-  lon: 2.3522,
+const place = await nominatim.reverse({ lat: 48.8566, lon: 2.3522 });
+const formatted = nominatim.formatLocation(place);
+// { country, countryCode, postcode, region, commune, district, street, placeType, fullAddress }
+```
+
+## Caching
+
+Caching is built-in and applied automatically to `search`, `reverse`, and `lookup` calls. Pass a `cache` option to configure:
+
+```typescript
+NominatimModule.forRoot({
+  userAgent: "YourApp/1.0",
+  cache: {
+    ttl: 3600000, // 1 hour
+    max: 1000,
+  },
 });
-const formatted = nominatimService.formatLocation(place);
-
-console.log(formatted.country); // "France"
-console.log(formatted.commune); // "Paris"
-console.log(formatted.street); // "Rue de Rivoli"
-console.log(formatted.postcode); // "75001"
-console.log(formatted.fullAddress); // Complete formatted address
 ```
 
-## 🏗️ Advanced Usage
-
-### Caching Configuration
-
-The library includes built-in caching support to improve performance and reduce API calls. Caching is automatically applied to all search, reverse geocoding, and lookup operations when configured.
-
-#### Basic Caching Setup
+For Redis or other stores:
 
 ```typescript
-import { Module } from "@nestjs/common";
-import { NominatimModule } from "nestjs-nominatim";
-
-@Module({
-  imports: [
-    NominatimModule.forRoot({
-      baseUrl: "https://nominatim.openstreetmap.org",
-      language: "en",
-      userAgent: "YourApp/1.0",
-      cache: {
-        ttl: 3600000, // Cache for 1 hour (in milliseconds)
-        max: 1000, // Store up to 1000 cached responses
-      },
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-#### Advanced Caching with Redis
-
-```typescript
-import { Module } from "@nestjs/common";
-import { NominatimModule } from "nestjs-nominatim";
 import { redisStore } from "cache-manager-redis-store";
 
-@Module({
-  imports: [
-    NominatimModule.forRoot({
-      baseUrl: "https://nominatim.openstreetmap.org",
-      language: "en",
-      userAgent: "YourApp/1.0",
-      cache: {
-        store: redisStore,
-        host: "localhost",
-        port: 6379,
-        ttl: 3600000, // 1 hour in milliseconds
-        max: 10000,
-      },
-    }),
-  ],
-})
-export class AppModule {}
+NominatimModule.forRoot({
+  userAgent: "YourApp/1.0",
+  cache: {
+    store: redisStore,
+    host: "localhost",
+    port: 6379,
+    ttl: 3600000,
+  },
+});
 ```
 
-#### Default Cache Configuration
+Default cache config (when no `cache` option is provided): 1 day TTL, in-memory store.
 
-If no cache configuration is provided, the library uses these defaults:
+Cache keys follow the pattern: `search:{query}`, `reverse:{lat}:{lon}`, `lookup:{id1},{id2}`.
+
+## Type Exports
+
+All types are exported from the package root:
 
 ```typescript
-{
-  ttl: 86400000,        // 1 day (in milliseconds)
-  namespace: "nominatim", // Cache key prefix
-  refreshThreshold: 60000, // Refresh if < 1 min left
-  nonBlocking: false,    // Block until store writes are done
-}
+import {
+  NominatimPlace,
+  NominatimSearchResults,
+  Coordinates,
+  FormattedAddress,
+  HealthCheck,
+  NominatimAddress,
+  NominatimExtraTags,
+  NominatimNameDetails,
+  NominatimModuleOptions,
+  NominatimModuleAsyncOptions,
+  NominatimOptionsFactory,
+  NOMINATIM_MODULE_OPTIONS,
+  OSMType,
+} from "nestjs-nominatim";
 ```
 
-#### Cache Keys
+## License
 
-The library uses structured cache keys for different operations:
+MIT — see [LICENSE](LICENSE).
 
-- Search: `search:{query}`
-- Reverse: `reverse:{lat}:{lon}`
-- Lookup: `lookup:{osmId1},{osmId2},...`
+## Contributing
 
-#### Performance Benefits
+1. Fork the repo
+2. Create a feature branch
+3. Submit a Pull Request
 
-With caching enabled, you can expect:
-
-- **Faster Response Times**: Subsequent identical requests return instantly from cache
-- **Reduced API Load**: Fewer requests to the Nominatim API
-- **Cost Savings**: Lower bandwidth usage and API rate limit consumption
-- **Better User Experience**: Instant results for repeated searches
-
-Example performance improvement:
-
-```typescript
-// First call - hits the API (slower)
-const result1 = await nominatimService.search("Paris, France"); // ~200-500ms
-
-// Second call - served from cache (faster)
-const result2 = await nominatimService.search("Paris, France"); // ~1-5ms
-```
-
-### Custom Configuration
-
-```typescript
-@Module({
-  imports: [
-    NominatimModule.forRoot({
-      baseUrl: "https://your-nominatim-instance.com",
-      language: "fr",
-      addressdetails: true,
-      extratags: true,
-      namedetails: true,
-      userAgent: "MyGeocodingApp/2.0 (contact@example.com)",
-      timeout: 10000,
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-### Error Handling
-
-```typescript
-@Injectable()
-export class LocationService {
-  constructor(private readonly nominatimService: NominatimService) {}
-
-  async safeSearch(query: string) {
-    try {
-      const results = await this.nominatimService.search(query);
-      return { success: true, data: results };
-    } catch (error) {
-      console.error("Geocoding failed:", error.message);
-      return { success: false, error: error.message };
-    }
-  }
-}
-```
-
-### Health Monitoring
-
-```typescript
-@Injectable()
-export class HealthService {
-  constructor(private readonly nominatimService: NominatimService) {}
-
-  @Get("/health/nominatim")
-  async checkNominatimHealth() {
-    const health = await this.nominatimService.healthCheck();
-    if (health.messasge === "OK" || health.status = 0) {
-      throw new ServiceUnavailableException("Nominatim API is unavailable");
-    }
-    return health;
-  }
-}
-```
-
-## 🌍 Language Support
-
-The library supports multiple languages for address formatting:
-
-```typescript
-// French addresses
-NominatimModule.forRoot({ language: "fr" });
-
-// German addresses
-NominatimModule.forRoot({ language: "de" });
-
-// Spanish addresses
-NominatimModule.forRoot({ language: "es" });
-```
-
-## 📝 Type Definitions
-
-The library includes comprehensive TypeScript definitions:
-
-- `NominatimSearchResults`: Array of search results
-- `NominatimPlace`: Detailed place information
-- `Coordinates`: Latitude/longitude coordinates
-- `FormattedAddress`: Structured address components
-- `HealthCheck`: API health status
-- `NominatimModuleOptions`: Configuration options
-
-## 🧪 Testing
-
-To run the included tests:
-
-```bash
-npm test
-```
-
-The test suite includes examples of all major functionality and can serve as additional documentation.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 🐛 Issues
-
-If you encounter any issues or have feature requests, please [create an issue](https://github.com/aceiny/nestjs-nominatim/issues) on GitHub.
-
-## 📞 Support
-
-For support and questions, please:
-
-- Check the documentation above
-- Look at the [test examples](src/test.ts)
-- Create an issue on GitHub
-
-## 🙏 Acknowledgments
-
-- [OpenStreetMap](https://www.openstreetmap.org/) for providing the Nominatim service
-- [NestJS](https://nestjs.com/) for the amazing framework
-- All contributors to this project
+Issues and feature requests: [GitHub Issues](https://github.com/aceiny/nestjs-nominatim/issues)
 
 ## Author
 
-```
-ahmed yassine zeraibi (aceiny.dev@gmail.com)
-```
-
-**Made with ❤️ for the NestJS community**
+Yassine Zeraibi (aceiny.dev@gmail.com)

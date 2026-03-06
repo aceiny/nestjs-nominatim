@@ -1,7 +1,9 @@
 {
   "name": "nestjs-nominatim",
-  "version": "1.1.5",
-  "description": "A powerful NestJS library for OpenStreetMap Nominatim API integration with TypeScript support, providing geocoding, reverse geocoding, place lookup functionality, and built-in caching support",
+  "version": "1.2.0",
+  "description": "A powerful NestJS module for OpenStreetMap Nominatim API integration — geocoding, reverse geocoding, place lookup, and built-in caching with full TypeScript support",
+  "author": "Yassine Zeraibi <aceiny.dev@gmail.com>",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.js",
@@ -27,13 +29,26 @@
     "type": "git",
     "url": "git+https://github.com/aceiny/nestjs-nominatim.git"
   },
+  "bugs": {
+    "url": "https://github.com/aceiny/nestjs-nominatim/issues"
+  },
+  "homepage": "https://github.com/aceiny/nestjs-nominatim#readme",
   "keywords": [
     "nestjs",
     "nominatim",
+    "geocoding",
+    "reverse-geocoding",
+    "openstreetmap",
+    "osm",
+    "geolocation",
+    "address-lookup",
+    "nestjs-module",
     "typescript",
-    "library"
+    "caching"
   ],
-  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "peerDependencies": {
     "@nestjs/axios": "^4.0.0",
     "@nestjs/cache-manager": "^3.0.1",
@@ -41,6 +56,14 @@
     "@nestjs/core": "^11.0.0",
     "axios": "^1.11.0",
     "cache-manager": "^7.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@nestjs/cache-manager": {
+      "optional": true
+    },
+    "cache-manager": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

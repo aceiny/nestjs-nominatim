@@ -48,7 +48,7 @@ export interface NominatimModuleOptions {
 
   /**
    * Cache configuration options
-   * @default CashConfig (1 day TTL with in-memory store)
+   * @default CacheConfig (1 day TTL with in-memory store)
    */
   cache?: CacheModuleOptions;
 }

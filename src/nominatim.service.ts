@@ -3,12 +3,13 @@
  */
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { NominatimModuleOptions } from "./types/interfaces/options.interface";
+import { NOMINATIM_MODULE_OPTIONS } from "./nominatim.constants";
 import axios, { AxiosInstance } from "axios";
 import { NominatimConfig } from "./config/nominatim.config";
 import { Coordinates } from "./types/interfaces/geolocation-coordinates.interface";
 import { HealthCheck } from "./types/interfaces/health-check.interface";
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
-import { CacheKeys } from "./helpers/cash-keys";
+import { CacheKeys } from "./helpers/cache-keys";
 import { FormattedAddress } from "./types/interfaces/formatted-address.interface";
 import { NominatimPlace } from "./types/interfaces/place.interface";
 import { NominatimSearchResults } from "./types/interfaces/search-result.interface";
@@ -38,7 +39,7 @@ export class NominatimService {
    * @param {NominatimModuleOptions} options - The module options for configuring the Nominatim service.
    */
   constructor(
-    @Inject("NOMINATIM_OPTIONS") private options: NominatimModuleOptions,
+    @Inject(NOMINATIM_MODULE_OPTIONS) private options: NominatimModuleOptions,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.logger = new Logger(NominatimService.name);
