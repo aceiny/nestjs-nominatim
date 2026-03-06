@@ -57,16 +57,40 @@ export class NominatimModule {
       global: true,
       imports: [
         HttpModule,
-        CacheModule.registerAsync({
-          useFactory: (opts: NominatimModuleOptions) =>
-            opts.cache ?? CacheConfig,
-          inject: [NOMINATIM_MODULE_OPTIONS],
-        }),
+        this.createCacheModule(options),
         ...(options.imports ?? []),
       ],
       providers: [...asyncProviders, NominatimService],
       exports: [NominatimService],
     };
+  }
+
+  private static createCacheModule(
+    options: NominatimModuleAsyncOptions,
+  ): DynamicModule {
+    if (options.useFactory) {
+      return CacheModule.registerAsync({
+        imports: options.imports,
+        useFactory: async (...args: any[]) => {
+          const opts = await options.useFactory!(...args);
+          return opts.cache ?? CacheConfig;
+        },
+        inject: options.inject ?? [],
+      });
+    }
+
+    if (options.useExisting) {
+      return CacheModule.registerAsync({
+        imports: options.imports,
+        useFactory: async (factory: NominatimOptionsFactory) => {
+          const opts = await factory.createNominatimOptions();
+          return opts.cache ?? CacheConfig;
+        },
+        inject: [options.useExisting],
+      });
+    }
+
+    return CacheModule.register({ ...CacheConfig });
   }
 
   private static createAsyncProviders(
